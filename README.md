@@ -49,7 +49,7 @@ cli-tool/
   ```
 ---
 ## 👤 Author
-🎓 Ragoza Kirill Andreevich
+🎓 Rogoza Kirill Andreevich
 Master's Program: System and Software Engineering (SPI)
 HSE University, 2025
 GitHub: @KirillRg
