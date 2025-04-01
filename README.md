@@ -21,6 +21,9 @@ cli-tool/
 │   ├── root.go           # CLI root using cobra
 │   └── generate.go       # generate command logic
 ├── internal/
+│   └── ast/
+│       ├── ast.go        # AST structures
+│       └── generator.go  # AST generation methods
 │   └── parser/
 │       ├── insomnia.go   # Data models for Insomnia collection
 │       └── parser.go     # YAML parsing logic
