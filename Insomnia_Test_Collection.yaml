@@ -5,7 +5,7 @@ meta:
   created: 1743113852038
   modified: 1743113852038
 collection:
-  - url: http:localtest//123
+  - url: http://localtest/getting
     name: get_test
     meta:
       id: req_dcfe635a0d094bb6b508617efaf168b8
@@ -55,7 +55,7 @@ collection:
         send: true
         store: true
       rebuildPath: true
-  - url: http:localtest//123
+  - url: http://localtest/posting
     name: post_test
     meta:
       id: req_0ff483d3cd8d48019bada86697001c69
@@ -103,7 +103,7 @@ collection:
         send: true
         store: true
       rebuildPath: true
-  - url: http:localtest//123/func
+  - url: http://localtest/deleting
     name: delete_test
     meta:
       id: req_aa4a2b7ee9e446b587cc3815b3687aa9
