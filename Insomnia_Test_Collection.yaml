@@ -10,16 +10,10 @@ collection:
     meta:
       id: req_dcfe635a0d094bb6b508617efaf168b8
       created: 1743113863320
-      modified: 1743114059429
+      modified: 1743792498380
       isPrivate: false
       sortKey: -1743113863320
     method: GET
-    body:
-      mimeType: application/json
-      text: |-
-        {
-        	"key_1":"value"
-        }
     parameters:
       - id: pair_e86cf36a1afb4aa19ec07a8d4c508f34
         name: param1
@@ -34,15 +28,14 @@ collection:
         value: surname
         disabled: false
     headers:
-      - name: Content-Type
-        value: application/json
       - name: User-Agent
         value: insomnia/11.0.1
         id: pair_bbbc59d0ba474bb691c1ca9564c322f3
+        disabled: true
       - id: pair_6cbe3b730c7046c59b5e6cfdfd732386
         name: Token
         value: some_custom_token
-        disabled: false
+        disabled: true
       - id: pair_3422cf3e34d74d9a975f1b7c75aaa45e
         name: Unused_header
         value: "111222"
@@ -60,7 +53,7 @@ collection:
     meta:
       id: req_0ff483d3cd8d48019bada86697001c69
       created: 1743114068663
-      modified: 1743114096242
+      modified: 1743792481391
       isPrivate: false
       sortKey: -1735898185519
     method: POST
@@ -87,6 +80,7 @@ collection:
       - name: Content-Type
         value: application/json
         id: pair_241cc2cef4214a4f8f1114e5655610ba
+        disabled: false
       - id: pair_6cbe3b730c7046c59b5e6cfdfd732386
         name: Token
         value: some_custom_token
@@ -108,7 +102,7 @@ collection:
     meta:
       id: req_aa4a2b7ee9e446b587cc3815b3687aa9
       created: 1743114156871
-      modified: 1743114221157
+      modified: 1743792231316
       isPrivate: false
       sortKey: -1732290346618.5
     method: DELETE
@@ -116,15 +110,15 @@ collection:
       - id: pair_e86cf36a1afb4aa19ec07a8d4c508f34
         name: param1
         value: name
-        disabled: false
+        disabled: true
       - id: pair_420a5a7d86cd4868ba96a1aefa19e2f0
         name: param2
         value: name_2_delete
-        disabled: false
+        disabled: true
       - id: pair_bfcfe95e4f7c41e6be11407a2d84c0c6
         name: param3
         value: surname
-        disabled: false
+        disabled: true
     headers:
       - id: pair_6cbe3b730c7046c59b5e6cfdfd732386
         name: Token
@@ -134,6 +128,29 @@ collection:
         name: New_header
         value: "111222"
         disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localtest/something
+    name: put_test
+    meta:
+      id: req_fd442ca61c0f4ccfbab28249d2a3a521
+      created: 1743797402293
+      modified: 1743797480479
+      isPrivate: false
+      sortKey: -1743797402293
+    method: PUT
+    parameters:
+      - id: pair_91609a7237314a19808ef05134f46f32
+        disabled: true
+    headers:
+      - id: pair_124c1019020a412c8a3c7e35e6750f5c
+        disabled: true
     settings:
       renderRequestBody: true
       encodeUrl: true
