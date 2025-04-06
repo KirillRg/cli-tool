@@ -4,21 +4,18 @@ import "github.com/KirillRg/cli-tool/internal/parser"
 
 // Генерация AST для коллекции
 func GenerateAST(collection *parser.InsomniaCollection) Program {
-	var body []Node
+	var body []Statement
 	for _, req := range collection.Collection {
 		body = append(body, GenerateRequestAST(req))
 	}
 	return Program{Body: body}
 }
 
-// Генерация универсального запроса в AST
-func GenerateRequestAST(req parser.RequestItem) Node {
-	// Универсальная генерация для всех типов запросов
-	args := []Node{Literal{Value: req.URL}}
+func GenerateRequestAST(req parser.RequestItem) Statement {
+	args := []Expression{Literal{Value: req.URL}}
 
-	properties := []Property{}
+	var properties []Property
 
-	// Генерация заголовков, если они есть и активны
 	if len(req.Headers) > 0 {
 		headers := GenerateHeaders(req.Headers)
 		if len(headers.Properties) > 0 {
@@ -29,7 +26,6 @@ func GenerateRequestAST(req parser.RequestItem) Node {
 		}
 	}
 
-	// Генерация параметров, если они есть и активны
 	if len(req.Parameters) > 0 {
 		params := GenerateParameters(req.Parameters)
 		if len(params.Properties) > 0 {
@@ -40,7 +36,6 @@ func GenerateRequestAST(req parser.RequestItem) Node {
 		}
 	}
 
-	// Генерация тела запроса, если оно есть
 	if req.Body.MimeType != "" || req.Body.Text != "" {
 		properties = append(properties, Property{
 			Key:   Identifier{Name: "body"},
@@ -48,15 +43,12 @@ func GenerateRequestAST(req parser.RequestItem) Node {
 		})
 	}
 
-	// Добавляем свойства (headers, params, body) в аргументы
 	if len(properties) > 0 {
 		args = append(args, ObjectExpression{Properties: properties})
 	}
 
-	// Формируем окончательную структуру вызова
 	return ExpressionStatement{
 		Expression: CallExpression{
-
 			Callee: MemberExpression{
 				Object:   Identifier{Name: "http"},
 				Property: Identifier{Name: req.Method},
@@ -66,9 +58,8 @@ func GenerateRequestAST(req parser.RequestItem) Node {
 	}
 }
 
-// Генерация заголовков запроса
 func GenerateHeaders(headers []parser.RequestHeader) ObjectExpression {
-	properties := []Property{}
+	var properties []Property
 	for _, header := range headers {
 		if !header.Disabled {
 			properties = append(properties, Property{
@@ -80,9 +71,8 @@ func GenerateHeaders(headers []parser.RequestHeader) ObjectExpression {
 	return ObjectExpression{Properties: properties}
 }
 
-// Генерация параметров запроса
 func GenerateParameters(params []parser.RequestParam) ObjectExpression {
-	properties := []Property{}
+	var properties []Property
 	for _, param := range params {
 		if !param.Disabled {
 			properties = append(properties, Property{
@@ -94,9 +84,8 @@ func GenerateParameters(params []parser.RequestParam) ObjectExpression {
 	return ObjectExpression{Properties: properties}
 }
 
-// Генерация тела запроса
 func GenerateBody(body parser.RequestBody) ObjectExpression {
-	properties := []Property{}
+	var properties []Property
 	if body.MimeType != "" {
 		properties = append(properties, Property{
 			Key:   Identifier{Name: "mimeType"},
