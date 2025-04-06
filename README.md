@@ -48,8 +48,12 @@ cli-tool/
   ```
 ### Example Output
   ```css
- Generating scripts from file: <file_name>.yaml
- Parsed collection: &{Type:..., Name:..., Collection:[...]}
+ Generating scripts from file: file.yaml
+___ ___ ___
+Parsed collection: ...
+___ ___ ___
+Generated AST: ...
+
   ```
 ---
 ## 👤 Author
