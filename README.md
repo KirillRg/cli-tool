@@ -27,7 +27,8 @@ cli-tool/
 │   └── parser/
 │       ├── insomnia.go   # Data models for Insomnia collection
 │       └── parser.go     # YAML parsing logic
-├── Insomnia_Test_Collection.yaml  # Example input collection
+├── Insomnia_Test_Collection_With_Environment.yaml  # Example input collection with Insomnia Environment variables
+├── Insomnia_Test_Collection.yaml  # Basic example input collection
 ├── go.mod / go.sum       # Go dependencies
 ├── LICENSE
 ├── main.go               # CLI entrypoint
@@ -47,7 +48,7 @@ cli-tool/
   ```
 ### Example Output
   ```css
- Generating scripts from file: Insomnia_Test_Collection.yaml
+ Generating scripts from file: <file_name>.yaml
  Parsed collection: &{Type:..., Name:..., Collection:[...]}
   ```
 ---
