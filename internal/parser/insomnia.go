@@ -1,9 +1,10 @@
 package parser
 
 type InsomniaCollection struct {
-	Type       string        `yaml:"type"`
-	Name       string        `yaml:"name"`
-	Collection []RequestItem `yaml:"collection"`
+	Type         string                 `yaml:"type"`
+	Name         string                 `yaml:"name"`
+	Collection   []RequestItem          `yaml:"collection"`
+	Environments InsomniaEnvironmentSet `yaml:"environments"`
 }
 
 type RequestItem struct {
@@ -36,4 +37,8 @@ type RequestHeader struct {
 type RequestSettings struct {
 	RenderRequestBody bool `yaml:"renderRequestBody"`
 	EncodeURL         bool `yaml:"encodeUrl"`
+}
+
+type InsomniaEnvironmentSet struct {
+	Data map[string]string `yaml:"data"`
 }
