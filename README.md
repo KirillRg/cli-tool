@@ -56,6 +56,25 @@ Generated AST: ...
 
   ```
 ---
+## 🔬 Benchmarking
+
+This CLI was evaluated using Go microbenchmarks to ensure it meets non-functional performance requirements under both average and extreme load conditions.
+
+### Benchmarked Scenarios
+
+| Scenario                      | Description                                         |
+|------------------------------|-----------------------------------------------------|
+| `Benchmark_10RequestASTGeneration` | Simulates average Insomnia collection (~10 requests) |
+| `Benchmark_Constant_10000Requests` | Simulates stress-load with 10,000 sequential requests  |
+
+### How to Run
+
+Benchmarks are located in the [`test/`](./test) directory. To run them and save results:
+
+```bash
+go test ./test -bench=Benchmark_ -benchtime=50x -benchmem > test/result.txt
+```
+---
 ## 👤 Author
 🎓 Rogoza Kirill Andreevich
 Master's Program: System and Software Engineering (SPI)
