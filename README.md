@@ -27,6 +27,9 @@ cli-tool/
 │   └── parser/
 │       ├── insomnia.go   # Data models for Insomnia collection
 │       └── parser.go     # YAML parsing logic
+│   └── test/
+│       ├── becnchmark_test.go   # Benchmarks for E2E AST generation
+│       └── result.txt     # Test results
 ├── Insomnia_Test_Collection_With_Environment.yaml  # Example input collection with Insomnia Environment variables
 ├── Insomnia_Test_Collection.yaml  # Basic example input collection
 ├── go.mod / go.sum       # Go dependencies
