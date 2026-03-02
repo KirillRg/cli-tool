@@ -1,6 +1,12 @@
 package ast
 
-import "github.com/KirillRg/cli-tool/internal/parser"
+import (
+	"net/url"
+	"strings"
+	"unicode"
+
+	"github.com/KirillRg/cli-tool/internal/parser"
+)
 
 // Генерация AST для коллекции
 func GenerateAST(collection *parser.InsomniaCollection) Program {
@@ -12,46 +18,47 @@ func GenerateAST(collection *parser.InsomniaCollection) Program {
 }
 
 func GenerateRequestAST(req parser.RequestItem) Statement {
-	args := []Expression{Literal{Value: req.URL}}
 
-	var properties []Property
+	urlWithQuery := appendQueryString(req.URL, req.Parameters)
 
-	if len(req.Headers) > 0 {
-		headers := GenerateHeaders(req.Headers)
+	args := []Expression{
+		Literal{Value: req.Method},
+		Literal{Value: urlWithQuery},
+	}
+
+	bodyArg := GenerateBody(req.Body)
+	args = append(args, bodyArg)
+
+	headersForRequest := req.Headers
+	if req.Body.MimeType != "" && !hasEnabledHeader(headersForRequest, "Content-Type") {
+		headersForRequest = append(headersForRequest, parser.RequestHeader{
+			Name:     "Content-Type",
+			Value:    req.Body.MimeType,
+			Disabled: false,
+		})
+	}
+
+	var paramsProperties []Property
+	if len(headersForRequest) > 0 {
+		headers := GenerateHeaders(headersForRequest)
 		if len(headers.Properties) > 0 {
-			properties = append(properties, Property{
+			paramsProperties = append(paramsProperties, Property{
 				Key:   Identifier{Name: "headers"},
 				Value: headers,
 			})
 		}
 	}
 
-	if len(req.Parameters) > 0 {
-		params := GenerateParameters(req.Parameters)
-		if len(params.Properties) > 0 {
-			properties = append(properties, Property{
-				Key:   Identifier{Name: "params"},
-				Value: params,
-			})
-		}
-	}
-
-	if req.Body.MimeType != "" || req.Body.Text != "" {
-		properties = append(properties, Property{
-			Key:   Identifier{Name: "body"},
-			Value: GenerateBody(req.Body),
-		})
-	}
-
-	if len(properties) > 0 {
-		args = append(args, ObjectExpression{Properties: properties})
+	// Добавляем 4-й аргумент только если есть содержимое (например headers)
+	if len(paramsProperties) > 0 {
+		args = append(args, ObjectExpression{Properties: paramsProperties})
 	}
 
 	return ExpressionStatement{
 		Expression: CallExpression{
 			Callee: MemberExpression{
 				Object:   Identifier{Name: "http"},
-				Property: Identifier{Name: req.Method},
+				Property: Identifier{Name: "request"},
 			},
 			Arguments: args,
 		},
@@ -61,42 +68,117 @@ func GenerateRequestAST(req parser.RequestItem) Statement {
 func GenerateHeaders(headers []parser.RequestHeader) ObjectExpression {
 	var properties []Property
 	for _, header := range headers {
-		if !header.Disabled {
-			properties = append(properties, Property{
-				Key:   Identifier{Name: header.Name},
-				Value: Literal{Value: header.Value},
-			})
+		if header.Disabled {
+			continue
 		}
-	}
-	return ObjectExpression{Properties: properties}
-}
-
-func GenerateParameters(params []parser.RequestParam) ObjectExpression {
-	var properties []Property
-	for _, param := range params {
-		if !param.Disabled {
-			properties = append(properties, Property{
-				Key:   Identifier{Name: param.Name},
-				Value: Literal{Value: param.Value},
-			})
+		var key Expression
+		if isValidJSIdentifier(header.Name) {
+			key = Identifier{Name: header.Name}
+		} else {
+			key = Literal{Value: header.Name}
 		}
-	}
-	return ObjectExpression{Properties: properties}
-}
 
-func GenerateBody(body parser.RequestBody) ObjectExpression {
-	var properties []Property
-	if body.MimeType != "" {
 		properties = append(properties, Property{
-			Key:   Identifier{Name: "mimeType"},
-			Value: Literal{Value: body.MimeType},
+			Key:   key,
+			Value: Literal{Value: header.Value},
 		})
 	}
+	return ObjectExpression{Properties: properties}
+}
+
+func GenerateBody(body parser.RequestBody) Expression {
 	if body.Text != "" {
-		properties = append(properties, Property{
-			Key:   Identifier{Name: "text"},
-			Value: Literal{Value: body.Text},
+		return Literal{Value: body.Text}
+	}
+
+	if body.MimeType != "" {
+		return Literal{Value: ""}
+	}
+
+	return Identifier{Name: "null"}
+}
+
+// HELPERS
+// Единый метод добавления query string через строковую обработку.
+func appendQueryString(rawURL string, params []parser.RequestParam) string {
+
+	type pair struct{ k, v string }
+	var pairs []pair
+	for _, p := range params {
+		if p.Disabled || p.Name == "" {
+			continue
+		}
+		pairs = append(pairs, pair{
+			k: url.QueryEscape(p.Name),
+			v: url.QueryEscape(p.Value),
 		})
 	}
-	return ObjectExpression{Properties: properties}
+	if len(pairs) == 0 {
+		return rawURL
+	}
+
+	base := rawURL
+	frag := ""
+	if i := strings.IndexByte(rawURL, '#'); i >= 0 {
+		base = rawURL[:i]
+		frag = rawURL[i:]
+	}
+
+	sep := "?"
+	if strings.Contains(base, "?") {
+		if strings.HasSuffix(base, "?") || strings.HasSuffix(base, "&") {
+			sep = ""
+		} else {
+			sep = "&"
+		}
+	}
+
+	var b strings.Builder
+	b.WriteString(base)
+	b.WriteString(sep)
+
+	for i, kv := range pairs {
+		if i > 0 {
+			b.WriteByte('&')
+		}
+		b.WriteString(kv.k)
+		b.WriteByte('=')
+		b.WriteString(kv.v)
+	}
+
+	b.WriteString(frag)
+	return b.String()
+}
+
+// Проверка на
+func isValidJSIdentifier(s string) bool {
+	if s == "" {
+		return false
+	}
+
+	for i, r := range s {
+		if i == 0 {
+			if !(r == '_' || r == '$' || unicode.IsLetter(r)) {
+				return false
+			}
+		} else {
+			if !(r == '_' || r == '$' || unicode.IsLetter(r) || unicode.IsDigit(r)) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// Проверка включенного header (связь с body и Content-Type в нём)
+func hasEnabledHeader(headers []parser.RequestHeader, name string) bool {
+	for _, h := range headers {
+		if h.Disabled {
+			continue
+		}
+		if strings.EqualFold(h.Name, name) {
+			return true
+		}
+	}
+	return false
 }

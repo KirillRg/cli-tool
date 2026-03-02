@@ -85,7 +85,7 @@ func (o ObjectExpression) Expression() {}
 // https://github.com/estree/estree/blob/master/es5.md#property
 
 type Property struct {
-	Key   Identifier
+	Key   Expression
 	Value Expression
 }
 
