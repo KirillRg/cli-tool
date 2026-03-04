@@ -10,24 +10,103 @@ import (
 
 // Генерация AST для коллекции
 func GenerateAST(collection *parser.InsomniaCollection) Program {
-	var body []Statement
+	// 1) Statements для default function body
+	var requestStatements []Statement
 	for _, req := range collection.Collection {
-		body = append(body, GenerateRequestAST(req))
+		requestStatements = append(requestStatements, GenerateRequestAST(req))
 	}
-	return Program{Body: body}
+
+	// 2) import http from "k6/http";
+	importHttp := &ImportDeclaration{
+		Type: "ImportDeclaration",
+		Specifiers: []ImportSpecifier{
+			&ImportDefaultSpecifier{
+				Type:  "ImportDefaultSpecifier",
+				Local: &Identifier{Type: "Identifier", Name: "http"},
+			},
+		},
+		Source: &Literal{Type: "Literal", Value: "k6/http"},
+	}
+
+	// 3) export const options = { vus: 1, duration: "10s" };
+	optionsObj := &ObjectExpression{
+		Type: "ObjectExpression",
+		Properties: []*Property{
+			{
+				Type:      "Property",
+				Key:       &Identifier{Type: "Identifier", Name: "vus"},
+				Value:     &Literal{Type: "Literal", Value: 1},
+				Kind:      "init",
+				Method:    false,
+				Shorthand: false,
+				Computed:  false,
+			},
+			{
+				Type:      "Property",
+				Key:       &Identifier{Type: "Identifier", Name: "duration"},
+				Value:     &Literal{Type: "Literal", Value: "10s"},
+				Kind:      "init",
+				Method:    false,
+				Shorthand: false,
+				Computed:  false,
+			},
+		},
+	}
+
+	optionsDecl := &VariableDeclaration{
+		Type: "VariableDeclaration",
+		Kind: "const",
+		Declarations: []*VariableDeclarator{
+			{
+				Type: "VariableDeclarator",
+				ID:   &Identifier{Type: "Identifier", Name: "options"},
+				Init: optionsObj,
+			},
+		},
+	}
+
+	exportOptions := &ExportNamedDeclaration{
+		Type:        "ExportNamedDeclaration",
+		Declaration: optionsDecl,
+	}
+
+	// 4) export default function () { ...requests... }
+	defaultFunc := &FunctionExpression{
+		Type:   "FunctionExpression",
+		ID:     nil,
+		Params: []Pattern{},
+		Body: &BlockStatement{
+			Type: "BlockStatement",
+			Body: requestStatements,
+		},
+	}
+
+	exportDefault := &ExportDefaultDeclaration{
+		Type:        "ExportDefaultDeclaration",
+		Declaration: defaultFunc,
+	}
+
+	// 5) Program { type:"Program", sourceType:"module", body:[import, export options, export default] }
+	return Program{
+		Type:       "Program",
+		SourceType: "module",
+		Body: []Node{
+			importHttp,
+			exportOptions,
+			exportDefault,
+		},
+	}
 }
 
+// GenerateRequestAST строит ExpressionStatement с CallExpression(http.request(...))
 func GenerateRequestAST(req parser.RequestItem) Statement {
-
 	urlWithQuery := appendQueryString(req.URL, req.Parameters)
 
 	args := []Expression{
-		Literal{Value: req.Method},
-		Literal{Value: urlWithQuery},
+		&Literal{Type: "Literal", Value: req.Method},
+		&Literal{Type: "Literal", Value: urlWithQuery},
+		GenerateBody(req.Body),
 	}
-
-	bodyArg := GenerateBody(req.Body)
-	args = append(args, bodyArg)
 
 	headersForRequest := req.Headers
 	if req.Body.MimeType != "" && !hasEnabledHeader(headersForRequest, "Content-Type") {
@@ -38,70 +117,90 @@ func GenerateRequestAST(req parser.RequestItem) Statement {
 		})
 	}
 
-	var paramsProperties []Property
+	var paramsProps []*Property
 	if len(headersForRequest) > 0 {
 		headers := GenerateHeaders(headersForRequest)
 		if len(headers.Properties) > 0 {
-			paramsProperties = append(paramsProperties, Property{
-				Key:   Identifier{Name: "headers"},
-				Value: headers,
+			paramsProps = append(paramsProps, &Property{
+				Type:      "Property",
+				Key:       &Identifier{Type: "Identifier", Name: "headers"},
+				Value:     headers,
+				Kind:      "init",
+				Method:    false,
+				Shorthand: false,
+				Computed:  false,
 			})
 		}
 	}
 
-	// Добавляем 4-й аргумент только если есть содержимое (например headers)
-	if len(paramsProperties) > 0 {
-		args = append(args, ObjectExpression{Properties: paramsProperties})
+	if len(paramsProps) > 0 {
+		args = append(args, &ObjectExpression{
+			Type:       "ObjectExpression",
+			Properties: paramsProps,
+		})
 	}
 
-	return ExpressionStatement{
-		Expression: CallExpression{
-			Callee: MemberExpression{
-				Object:   Identifier{Name: "http"},
-				Property: Identifier{Name: "request"},
-			},
-			Arguments: args,
+	call := &CallExpression{
+		Type: "CallExpression",
+		Callee: &MemberExpression{
+			Type:     "MemberExpression",
+			Object:   &Identifier{Type: "Identifier", Name: "http"},
+			Property: &Identifier{Type: "Identifier", Name: "request"},
+			Computed: false,
 		},
+		Arguments: args,
+	}
+
+	return &ExpressionStatement{
+		Type:       "ExpressionStatement",
+		Expression: call,
 	}
 }
 
-func GenerateHeaders(headers []parser.RequestHeader) ObjectExpression {
-	var properties []Property
+func GenerateHeaders(headers []parser.RequestHeader) *ObjectExpression {
+	var props []*Property
 	for _, header := range headers {
 		if header.Disabled {
 			continue
 		}
+
 		var key Expression
 		if isValidJSIdentifier(header.Name) {
-			key = Identifier{Name: header.Name}
+			key = &Identifier{Type: "Identifier", Name: header.Name}
 		} else {
-			key = Literal{Value: header.Name}
+			key = &Literal{Type: "Literal", Value: header.Name}
 		}
 
-		properties = append(properties, Property{
-			Key:   key,
-			Value: Literal{Value: header.Value},
+		props = append(props, &Property{
+			Type:      "Property",
+			Key:       key,
+			Value:     &Literal{Type: "Literal", Value: header.Value},
+			Kind:      "init",
+			Method:    false,
+			Shorthand: false,
+			Computed:  false,
 		})
 	}
-	return ObjectExpression{Properties: properties}
+
+	return &ObjectExpression{
+		Type:       "ObjectExpression",
+		Properties: props,
+	}
 }
 
 func GenerateBody(body parser.RequestBody) Expression {
 	if body.Text != "" {
-		return Literal{Value: body.Text}
+		return &Literal{Type: "Literal", Value: body.Text}
 	}
-
 	if body.MimeType != "" {
-		return Literal{Value: ""}
+		return &Literal{Type: "Literal", Value: ""}
 	}
-
-	return Identifier{Name: "null"}
+	return &Literal{Type: "Literal", Value: nil}
 }
 
 // HELPERS
 // Единый метод добавления query string через строковую обработку.
 func appendQueryString(rawURL string, params []parser.RequestParam) string {
-
 	type pair struct{ k, v string }
 	var pairs []pair
 	for _, p := range params {
@@ -150,7 +249,7 @@ func appendQueryString(rawURL string, params []parser.RequestParam) string {
 	return b.String()
 }
 
-// Проверка на
+// Проверка на строковое соответствие JS
 func isValidJSIdentifier(s string) bool {
 	if s == "" {
 		return false
