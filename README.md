@@ -1,6 +1,6 @@
 # CLI Tool for Insomnia Collections → k6 AST
 
-🚀 A command-line tool that parses **Insomnia (v5)** collections in YAML format and transforms them into Go-based **Abstract Syntax Tree (AST)** structures, preparing them for future code generation (e.g., k6 load testing scripts).
+🚀 A command-line tool that parses **Insomnia (v5)** collections in YAML format and transforms them into Go-based **Abstract Syntax Tree (AST)** structures, preparing them for future code creation (e.g., k6 load testing scripts).
 
 ---
 
@@ -11,7 +11,7 @@ This CLI is part of a Master's thesis project (*HSE, 2025*) aimed at automating 
 - ❌ `postman-to-k6` is incompatible with Insomnia and not accessible due to licensing restrictions in Russia.
 - ❌ `openapi-to-k6` lacks logic handling, only defines requests.
 - ✅ Our tool is **vendor-neutral**, extensible, and CLI-friendly.
-- ✅ It uses its own **platform-independent AST**
+- ✅ It uses its own **platform-independent ESTREE standarted AST**
 
 ---
 ## 📁 Project Structure
@@ -19,8 +19,10 @@ This CLI is part of a Master's thesis project (*HSE, 2025*) aimed at automating 
 cli-tool/
 ├── cmd/
 │   ├── root.go           # CLI root using cobra
-│   └── generate.go       # generate command logic
+│   └── build.go       # command logic
 ├── internal/
+│   └── translator/
+│       ├── translator.go   # k6 JS translatyion from AST
 │   └── ast/
 │       ├── ast.go        # AST structures
 │       └── generator.go  # AST generation methods
@@ -47,15 +49,11 @@ cli-tool/
   ```
 ### Run the tool
   ```bash
-  go run main.go generate --input Insomnia_Test_Collection.yaml
+  go run main.go translate --input Insomnia_Test_Collection.yaml
   ```
 ### Example Output
   ```css
- Generating scripts from file: file.yaml
-___ ___ ___
-Parsed collection: ...
-___ ___ ___
-Generated AST: ...
+  //TO DO
 
   ```
 ---
