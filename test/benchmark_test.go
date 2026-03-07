@@ -8,9 +8,9 @@ import (
 
 	"github.com/KirillRg/cli-tool/internal/ast"
 	"github.com/KirillRg/cli-tool/internal/parser"
+	"github.com/KirillRg/cli-tool/internal/translator"
 )
 
-// Бенчмарк: сколько 10-запросных коллекций обрабатывается за секунду
 func Benchmark_10RequestASTGeneration(b *testing.B) {
 	yamlData := generateFakeCollectionYAML(10)
 	tmpFile := writeTempFile(b, yamlData)
@@ -31,7 +31,6 @@ func Benchmark_10RequestASTGeneration(b *testing.B) {
 	}
 }
 
-// Бенчмарк: постоянная нагрузка на 10 000 запросов
 func Benchmark_Constant_10000Requests(b *testing.B) {
 	yamlData := generateFakeCollectionYAML(10000)
 	tmpFile := writeTempFile(b, yamlData)
@@ -49,6 +48,122 @@ func Benchmark_Constant_10000Requests(b *testing.B) {
 			b.Fatal(err)
 		}
 		_ = ast.GenerateAST(collection)
+	}
+}
+
+func Benchmark_10RequestFullPipeline(b *testing.B) {
+	yamlData := generateFakeCollectionYAML(10)
+	tmpFile := writeTempFile(b, yamlData)
+
+	collection, err := parser.ParseInsomniaCollection(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+	fmt.Printf("Loaded 10-req collection for full pipeline: %d requests\n", len(collection.Collection))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		collection, err := parser.ParseInsomniaCollection(tmpFile)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		tree := ast.GenerateAST(collection)
+
+		_, err = translator.TranslateProgram(tree)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func Benchmark_Constant_10000RequestsFullPipeline(b *testing.B) {
+	yamlData := generateFakeCollectionYAML(10000)
+	tmpFile := writeTempFile(b, yamlData)
+
+	collection, err := parser.ParseInsomniaCollection(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+	fmt.Printf("Loaded 10K-req collection for full pipeline: %d requests\n", len(collection.Collection))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		collection, err := parser.ParseInsomniaCollection(tmpFile)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		tree := ast.GenerateAST(collection)
+
+		_, err = translator.TranslateProgram(tree)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func Benchmark_10RequestFullPipelineWithWrite(b *testing.B) {
+	yamlData := generateFakeCollectionYAML(10)
+	tmpFile := writeTempFile(b, yamlData)
+	outFile := "bench_output_10.js"
+
+	collection, err := parser.ParseInsomniaCollection(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+	fmt.Printf("Loaded 10-req collection for full pipeline + write: %d requests\n", len(collection.Collection))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		collection, err := parser.ParseInsomniaCollection(tmpFile)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		tree := ast.GenerateAST(collection)
+
+		code, err := translator.TranslateProgram(tree)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		err = os.WriteFile(outFile, []byte(code), 0644)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func Benchmark_Constant_10000RequestsFullPipelineWithWrite(b *testing.B) {
+	yamlData := generateFakeCollectionYAML(10000)
+	tmpFile := writeTempFile(b, yamlData)
+	outFile := "bench_output_10000.js"
+
+	collection, err := parser.ParseInsomniaCollection(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+	fmt.Printf("Loaded 10K-req collection for full pipeline + write: %d requests\n", len(collection.Collection))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		collection, err := parser.ParseInsomniaCollection(tmpFile)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		tree := ast.GenerateAST(collection)
+
+		code, err := translator.TranslateProgram(tree)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		err = os.WriteFile(outFile, []byte(code), 0644)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 

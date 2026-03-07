@@ -6,7 +6,7 @@
 
 ## 💡 Purpose
 
-This CLI is part of a Master's thesis project (*HSE, 2025*) aimed at automating the transformation of API collections into load testing scripts. It addresses limitations of existing tools:
+This CLI is part of a Master's thesis project (*HSE, 2025 - 2026*) aimed at automating the transformation of API collections into load testing scripts. It addresses limitations of existing tools:
 
 - ❌ `postman-to-k6` is incompatible with Insomnia and not accessible due to licensing restrictions in Russia.
 - ❌ `openapi-to-k6` lacks logic handling, only defines requests.
@@ -18,17 +18,17 @@ This CLI is part of a Master's thesis project (*HSE, 2025*) aimed at automating 
 ```graphql
 cli-tool/
 ├── cmd/
-│   ├── root.go           # CLI root using cobra
+│   ├── root.go        # CLI root using cobra
 │   └── build.go       # command logic
 ├── internal/
-│   └── translator/
-│       ├── translator.go   # k6 JS translatyion from AST
 │   └── ast/
 │       ├── ast.go        # AST structures
 │       └── generator.go  # AST generation methods
 │   └── parser/
 │       ├── insomnia.go   # Data models for Insomnia collection
 │       └── parser.go     # YAML parsing logic
+│   └── translator/
+│       ├── translator.go   # k6 JS translatyion from AST
 ├── test/
 │   ├── becnchmark_test.go   # Benchmarks for E2E AST generation
 │   └── result.txt     # Test results
@@ -65,8 +65,12 @@ This CLI was evaluated using Go microbenchmarks to ensure it meets non-functiona
 
 | Scenario                      | Description                                         |
 |------------------------------|-----------------------------------------------------|
-| `Benchmark_10RequestASTGeneration` | Simulates average Insomnia collection (~10 requests) |
-| `Benchmark_Constant_10000Requests` | Simulates stress-load with 10,000 sequential requests  |
+| `Benchmark_10RequestASTGeneration` | Simulates stress-load for scenario 'parse -> AST' on 10 requests collection |
+| `Benchmark_Constant_10000Requests` | Simulates stress-load for scenario 'parse -> AST' on 10,000 requests collection |
+| `Benchmark_10RequestFullPipeline` | Simulates stress-load for scenario 'parse -> AST -> script' on 10 requests collection  |
+| `Benchmark_Constant_10000RequestsFullPipeline` | Simulates stress-load for scenario 'parse -> AST -> script' on 10,000 requests collection |
+| `Benchmark_10RequestFullPipelineWithWrite` | Simulates stress-load for scenario 'parse -> AST -> script -> file' on 10 requests collection |
+| `Benchmark_Constant_10000RequestsFullPipelineWithWrite` | Simulates stress-load for scenario 'parse -> AST -> script -> file' on 10,000 requests collection |
 
 ### How to Run
 
