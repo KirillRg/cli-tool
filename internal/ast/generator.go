@@ -6,10 +6,11 @@ import (
 	"unicode"
 
 	"github.com/KirillRg/cli-tool/internal/parser"
+	"github.com/KirillRg/cli-tool/internal/profile"
 )
 
 // Генерация AST для коллекции
-func GenerateAST(collection *parser.InsomniaCollection) Program {
+func GenerateAST(collection *parser.InsomniaCollection, profile *profile.LoadProfile) Program {
 	// 1) Statements для default function body
 	var requestStatements []Statement
 	for _, req := range collection.Collection {
@@ -28,30 +29,8 @@ func GenerateAST(collection *parser.InsomniaCollection) Program {
 		Source: &Literal{Type: "Literal", Value: "k6/http"},
 	}
 
-	// 3) export const options = { vus: 1, duration: "10s" };
-	optionsObj := &ObjectExpression{
-		Type: "ObjectExpression",
-		Properties: []*Property{
-			{
-				Type:      "Property",
-				Key:       &Identifier{Type: "Identifier", Name: "vus"},
-				Value:     &Literal{Type: "Literal", Value: 1},
-				Kind:      "init",
-				Method:    false,
-				Shorthand: false,
-				Computed:  false,
-			},
-			{
-				Type:      "Property",
-				Key:       &Identifier{Type: "Identifier", Name: "duration"},
-				Value:     &Literal{Type: "Literal", Value: "10s"},
-				Kind:      "init",
-				Method:    false,
-				Shorthand: false,
-				Computed:  false,
-			},
-		},
-	}
+	// 3) export const options = { ...profile-based options... };
+	optionsObj := BuildOptionsAST(profile)
 
 	optionsDecl := &VariableDeclaration{
 		Type: "VariableDeclaration",

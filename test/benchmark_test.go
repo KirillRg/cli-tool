@@ -8,6 +8,7 @@ import (
 
 	"github.com/KirillRg/cli-tool/internal/ast"
 	"github.com/KirillRg/cli-tool/internal/parser"
+	"github.com/KirillRg/cli-tool/internal/profile"
 	"github.com/KirillRg/cli-tool/internal/translator"
 )
 
@@ -21,13 +22,18 @@ func Benchmark_10RequestASTGeneration(b *testing.B) {
 	}
 	fmt.Printf("Loaded 10-req collection: %d requests\n", len(collection.Collection))
 
+	lp, err := buildBenchmarkProfile(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		collection, err := parser.ParseInsomniaCollection(tmpFile)
 		if err != nil {
 			b.Fatal(err)
 		}
-		_ = ast.GenerateAST(collection)
+		_ = ast.GenerateAST(collection, lp)
 	}
 }
 
@@ -41,13 +47,18 @@ func Benchmark_Constant_10000Requests(b *testing.B) {
 	}
 	fmt.Printf("Loaded 10K-req collection: %d requests\n", len(collection.Collection))
 
+	lp, err := buildBenchmarkProfile(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		collection, err := parser.ParseInsomniaCollection(tmpFile)
 		if err != nil {
 			b.Fatal(err)
 		}
-		_ = ast.GenerateAST(collection)
+		_ = ast.GenerateAST(collection, lp)
 	}
 }
 
@@ -61,6 +72,11 @@ func Benchmark_10RequestFullPipeline(b *testing.B) {
 	}
 	fmt.Printf("Loaded 10-req collection for full pipeline: %d requests\n", len(collection.Collection))
 
+	lp, err := buildBenchmarkProfile(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		collection, err := parser.ParseInsomniaCollection(tmpFile)
@@ -68,7 +84,7 @@ func Benchmark_10RequestFullPipeline(b *testing.B) {
 			b.Fatal(err)
 		}
 
-		tree := ast.GenerateAST(collection)
+		tree := ast.GenerateAST(collection, lp)
 
 		_, err = translator.TranslateProgram(tree)
 		if err != nil {
@@ -87,6 +103,11 @@ func Benchmark_Constant_10000RequestsFullPipeline(b *testing.B) {
 	}
 	fmt.Printf("Loaded 10K-req collection for full pipeline: %d requests\n", len(collection.Collection))
 
+	lp, err := buildBenchmarkProfile(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		collection, err := parser.ParseInsomniaCollection(tmpFile)
@@ -94,7 +115,7 @@ func Benchmark_Constant_10000RequestsFullPipeline(b *testing.B) {
 			b.Fatal(err)
 		}
 
-		tree := ast.GenerateAST(collection)
+		tree := ast.GenerateAST(collection, lp)
 
 		_, err = translator.TranslateProgram(tree)
 		if err != nil {
@@ -114,6 +135,11 @@ func Benchmark_10RequestFullPipelineWithWrite(b *testing.B) {
 	}
 	fmt.Printf("Loaded 10-req collection for full pipeline + write: %d requests\n", len(collection.Collection))
 
+	lp, err := buildBenchmarkProfile(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		collection, err := parser.ParseInsomniaCollection(tmpFile)
@@ -121,7 +147,7 @@ func Benchmark_10RequestFullPipelineWithWrite(b *testing.B) {
 			b.Fatal(err)
 		}
 
-		tree := ast.GenerateAST(collection)
+		tree := ast.GenerateAST(collection, lp)
 
 		code, err := translator.TranslateProgram(tree)
 		if err != nil {
@@ -146,6 +172,11 @@ func Benchmark_Constant_10000RequestsFullPipelineWithWrite(b *testing.B) {
 	}
 	fmt.Printf("Loaded 10K-req collection for full pipeline + write: %d requests\n", len(collection.Collection))
 
+	lp, err := buildBenchmarkProfile(tmpFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		collection, err := parser.ParseInsomniaCollection(tmpFile)
@@ -153,7 +184,7 @@ func Benchmark_Constant_10000RequestsFullPipelineWithWrite(b *testing.B) {
 			b.Fatal(err)
 		}
 
-		tree := ast.GenerateAST(collection)
+		tree := ast.GenerateAST(collection, lp)
 
 		code, err := translator.TranslateProgram(tree)
 		if err != nil {
@@ -165,6 +196,18 @@ func Benchmark_Constant_10000RequestsFullPipelineWithWrite(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+}
+
+func buildBenchmarkProfile(inputPath string) (*profile.LoadProfile, error) {
+	return profile.Build(profile.BuildInput{
+		InputPath:     inputPath,
+		OutputPath:    "test",
+		VUs:           1,
+		Duration:      "10s",
+		Iterations:    0,
+		StagesRaw:     nil,
+		ThresholdsRaw: nil,
+	})
 }
 
 // Генерация фейковой коллекции с N запросами

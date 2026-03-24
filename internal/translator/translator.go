@@ -62,6 +62,8 @@ func (t *translator) translateNode(n ast.Node) error {
 		return nil
 	case *ast.Literal:
 		return t.translateLiteral(v)
+	case *ast.ArrayExpression:
+		return t.translateArrayExpression(v)
 	default:
 		return fmt.Errorf("translator: unsupported node type %T", n)
 	}
@@ -329,6 +331,39 @@ func (t *translator) translateLiteral(n *ast.Literal) error {
 		t.write(fmt.Sprintf("%v", v))
 		return nil
 	}
+}
+
+func (t *translator) translateArrayExpression(n *ast.ArrayExpression) error {
+	if len(n.Elements) == 0 {
+		t.write("[]")
+		return nil
+	}
+
+	t.write("[\n")
+	t.indent++
+
+	for i, el := range n.Elements {
+		t.writeIndent()
+
+		if el == nil {
+			t.write("null")
+		} else {
+			if err := t.translateNode(el.(ast.Node)); err != nil {
+				return err
+			}
+		}
+
+		if i != len(n.Elements)-1 {
+			t.write(",")
+		}
+		t.write("\n")
+	}
+
+	t.indent--
+	t.writeIndent()
+	t.write("]")
+
+	return nil
 }
 
 func (t *translator) write(s string) {

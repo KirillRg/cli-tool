@@ -132,6 +132,15 @@ type ObjectExpression struct {
 func (*ObjectExpression) node()       {}
 func (*ObjectExpression) expression() {}
 
+// Spec: https://github.com/estree/estree/blob/master/es5.md#arrayexpression
+type ArrayExpression struct {
+	Type     string       `json:"type"`
+	Elements []Expression `json:"elements"`
+}
+
+func (*ArrayExpression) node()       {}
+func (*ArrayExpression) expression() {}
+
 // Spec (Property ES5): https://github.com/estree/estree/blob/master/es5.md#property
 // Spec (Property extensions method/shorthand/computed): https://github.com/estree/estree/blob/master/es2015.md#property
 type Property struct {
