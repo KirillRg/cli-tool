@@ -1,37 +1,37 @@
 # CLI Tool for Insomnia Collections → k6 AST
 
-🚀 A command-line tool that parses **Insomnia (v5)** collections in YAML format and transforms them into Go-based **Abstract Syntax Tree (AST)** structures, preparing them for future code creation (e.g., k6 load testing scripts).
+A CLI tool that translates **Insomnia (v5)** collections (YAML) into ready-to-run **k6** load testing scripts. It uses **Abstract Syntax Tree (AST)** as an intermediate representation and also provides an **[Insomnia plugin](https://github.com/KirillRg/insomnia-plugin-k6-translator)** as a UI wrapper over the CLI core.
 
 ---
 
-## 💡 Purpose
+## Purpose
 
-This CLI is part of a Master's thesis project (*HSE, 2025 - 2026*) aimed at automating the transformation of API collections into load testing scripts. It addresses limitations of existing tools:
+This CLI is part of a Master's thesis project (*HSE, 2025 - 2026*) aimed at automating the transformation of API collections into load testing scripts. The key idea is to use **ESTree-compliant AST** as an intermediate representation — this separates parsing from code generation and makes the transformation pipeline more maintainable and verifiable.
 
-- ❌ `postman-to-k6` is incompatible with Insomnia and not accessible due to licensing restrictions in Russia.
-- ❌ `openapi-to-k6` lacks logic handling, only defines requests.
-- ✅ Our tool is **vendor-neutral**, extensible, and CLI-friendly.
-- ✅ It uses its own **platform-independent ESTREE standarted AST**
+The main goal is to provide a new integration bridge between **Insomnia** (as a practical API client) and **k6** (as a modern load testing tool)
 
 ---
-## 📁 Project Structure
+## Project Structure
 ```graphql
 cli-tool/
 ├── cmd/
 │   ├── root.go        # CLI root using cobra
-│   └── build.go       # command logic
+│   └── build.go       # command/flags logic
 ├── internal/
 │   └── ast/
-│       ├── ast.go        # AST structures
+│       ├── ast.go        # AST structures with ESTREE links
 │       └── generator.go  # AST generation methods
 │   └── parser/
 │       ├── insomnia.go   # Data models for Insomnia collection
 │       └── parser.go     # YAML parsing logic
+│   └── profile/
+│       ├── builder.go   # k6 load profile construction
+│       └── model.go     # load profile structure definitions
 │   └── translator/
 │       ├── translator.go   # k6 JS translatyion from AST
 ├── test/
-│   ├── becnchmark_test.go   # Benchmarks for E2E AST generation
-│   └── result.txt     # Test results
+│   ├── becnchmark_test.go   # Benchmarks for E2E k6 translation with different stages
+│   └── result.txt     # Becnchmark test results
 ├── Insomnia_Test_Collection_With_Environment.yaml  # Example input collection with Insomnia Environment variables
 ├── Insomnia_Test_Collection.yaml  # Basic example input collection
 ├── go.mod / go.sum       # Go dependencies
@@ -40,24 +40,23 @@ cli-tool/
 └── README.md             # Project info
 ```
 ---
-## ⚙️ Installation & Usage
+## Installation & Usage
 ### Prerequisites
 - Go 1.21+
 - Cobra CLI installed:
   ```bash
   go install github.com/spf13/cobra-cli@latest
   ```
-### Run the tool
+### Run the tool with output inside project
   ```bash
-  go run main.go translate --input Insomnia_Test_Collection.yaml
+  go run main.go translate --input Insomnia_Test_Collection.yaml --vus 100 --duration 100s
   ```
 ### Example Output
   ```css
-  //TO DO
-
+  Translated k6 scrypt: //output_file_path
   ```
 ---
-## 🔬 Benchmarking
+## Benchmarking
 
 This CLI was evaluated using Go microbenchmarks to ensure it meets non-functional performance requirements under both average and extreme load conditions.
 
