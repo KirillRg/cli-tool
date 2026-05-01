@@ -31,7 +31,8 @@ cli-tool/
 │       ├── translator.go   # k6 JS translatyion from AST
 ├── test/
 │   ├── becnchmark_test.go   # Benchmarks for E2E k6 translation with different stages
-│   └── result.txt     # Becnchmark test results
+│   └── func_result.txt     # Functional test results
+│   └── nonfunc_result.txt     # Becnchmark test results
 ├── Insomnia_Test_Collection_With_Environment.yaml  # Example input collection with Insomnia Environment variables
 ├── Insomnia_Test_Collection.yaml  # Basic example input collection
 ├── go.mod / go.sum       # Go dependencies
@@ -76,7 +77,23 @@ This CLI was evaluated using Go microbenchmarks to ensure it meets non-functiona
 Benchmarks are located in the [`test/`](./test) directory. To run them and save results:
 
 ```bash
-go test ./test -bench=Benchmark_ -benchtime=50x -benchmem > test/result.txt
+go test ./test -bench=Benchmark_ -benchtime=50x -benchmem > test/nonfunc_result.txt
+```
+---
+## Functional Testing
+
+The project also includes a set of functional automated checks covering:
+
+- unit tests for `profile`, `parser`, `ast`, and `translator`
+- validation tests for CLI input flags
+- one E2E test that verifies the generated k6 script is accepted by `k6 inspect` *k6 download required
+
+### How to Run
+
+To execute all functional checks and save the results into a text file:
+
+```bash
+go test ./test/autotests/... -v > test/func_result.txt
 ```
 ---
 ## 👤 Author
