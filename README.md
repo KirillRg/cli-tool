@@ -20,7 +20,10 @@ cli-tool/
 ├── internal/
 │   └── ast/
 │       ├── ast.go        # AST structures with ESTREE links
-│       └── generator.go  # AST generation methods
+│       ├── generator.go  # AST generation methods for collection
+│       ├── json_export.go  # AST to JSON conversion
+│       └── options.go  # AST generation methods for profile
+
 │   └── parser/
 │       ├── insomnia.go   # Data models for Insomnia collection
 │       └── parser.go     # YAML parsing logic
@@ -28,7 +31,8 @@ cli-tool/
 │       ├── builder.go   # k6 load profile construction
 │       └── model.go     # load profile structure definitions
 │   └── translator/
-│       ├── translator.go   # k6 JS translatyion from AST
+│       ├── node_translators.go   # set of translation rules for nodes
+│       └── translator.go   # k6 JS translation from AST
 ├── test/
 │   ├── becnchmark_test.go   # Benchmarks for E2E k6 translation with different stages
 │   └── func_result.txt     # Functional test results

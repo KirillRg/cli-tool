@@ -79,14 +79,55 @@ Currently supports basic JSON and YAML Insomnia collections.`,
 	},
 }
 
+var astCmd = &cobra.Command{
+	Use:   "ast",
+	Short: "Builds AST from an Insomnia collection and saves it as JSON",
+	Long: `Builds an ESTree-compatible AST from the provided Insomnia collection
+and saves the resulting tree into a JSON file.`,
+
+	SilenceUsage: true,
+
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		return validateTranslateFlags()
+	},
+
+	RunE: func(cmd *cobra.Command, args []string) error {
+		loadProfile, err := profile.Build(profile.BuildInput{
+			InputPath:     inputFilePath,
+			OutputPath:    outputFilePath,
+			VUs:           vusFlag,
+			Duration:      durationFlag,
+			Iterations:    iterationsFlag,
+			StagesRaw:     stageFlags,
+			ThresholdsRaw: thresholdFlags,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to build load profile: %w", err)
+		}
+
+		collection, err := parser.ParseInsomniaCollection(inputFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to parse input file: %w", err)
+		}
+
+		tree := ast.GenerateAST(collection, loadProfile)
+
+		if err := ast.WriteProgramJSON(tree, outputFilePath); err != nil {
+			return err
+		}
+
+		fmt.Printf("Generated AST JSON file: %s\n", outputFilePath)
+		return nil
+	},
+}
+
 func init() {
+	//Команда траснляции скрипта
 	rootCmd.AddCommand(translateCmd)
 
-	// Базовые input/output флаги
 	translateCmd.Flags().StringVarP(&inputFilePath, "input", "i", "", "Input Insomnia collection file (required)")
 	translateCmd.Flags().StringVarP(&outputFilePath, "output", "o", "result/k6_script.js", "Output k6 script path")
 
-	// Флаги профиля нагрузки
 	translateCmd.Flags().IntVar(&vusFlag, "vus", 0, "Number of virtual users")
 	translateCmd.Flags().StringVar(&durationFlag, "duration", "", "Test duration, for example 30s or 1m")
 	translateCmd.Flags().IntVar(&iterationsFlag, "iterations", 0, "Total number of iterations")
@@ -94,6 +135,22 @@ func init() {
 	translateCmd.Flags().StringSliceVar(&thresholdFlags, "threshold", nil, "Threshold rule in format <metric>=<condition>, repeatable")
 
 	if err := translateCmd.MarkFlagRequired("input"); err != nil {
+		panic(err)
+	}
+
+	//Команда траснляции дерева в JSON
+	rootCmd.AddCommand(astCmd)
+
+	astCmd.Flags().StringVarP(&inputFilePath, "input", "i", "", "Input Insomnia collection file (required)")
+	astCmd.Flags().StringVarP(&outputFilePath, "output", "o", "result/ast.json", "Output AST JSON path")
+
+	astCmd.Flags().IntVar(&vusFlag, "vus", 0, "Number of virtual users")
+	astCmd.Flags().StringVar(&durationFlag, "duration", "", "Test duration, for example 30s or 1m")
+	astCmd.Flags().IntVar(&iterationsFlag, "iterations", 0, "Total number of iterations")
+	astCmd.Flags().StringSliceVar(&stageFlags, "stage", nil, "Ramp stage in format <duration>:<target>, repeatable")
+	astCmd.Flags().StringSliceVar(&thresholdFlags, "threshold", nil, "Threshold rule in format <metric>=<condition>, repeatable")
+
+	if err := astCmd.MarkFlagRequired("input"); err != nil {
 		panic(err)
 	}
 }
